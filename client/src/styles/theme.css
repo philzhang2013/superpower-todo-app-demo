@@ -1,0 +1,27 @@
+/* 亮色主题（默认） */
+:root {
+  --bg-page: #f0f2f5;
+  --bg-card: #ffffff;
+  --bg-navbar: #409eff;
+  --bg-input: #ffffff;
+  --text-primary: #303133;
+  --text-secondary: #909399;
+  --text-muted: #c0c4cc;
+  --border-color: #e4e7ed;
+  --border-light: #f0f0f0;
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* 暗色主题 */
+html[data-theme="dark"] {
+  --bg-page: #1a1a2e;
+  --bg-card: #16213e;
+  --bg-navbar: #0f3460;
+  --bg-input: #1a1a3e;
+  --text-primary: #e4e7ed;
+  --text-secondary: #a0a3a8;
+  --text-muted: #606266;
+  --border-color: #2a2a4a;
+  --border-light: #2a2a4a;
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
