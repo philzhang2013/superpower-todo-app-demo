@@ -189,7 +189,7 @@ function handleLogout() {
   align-items: center;
   padding: 12px 24px;
   background: var(--bg-navbar);
-  color: #fff;
+  color: var(--text-navbar);
 }
 
 .logo {
@@ -234,8 +234,8 @@ function handleLogout() {
 }
 
 .filter-tab.active {
-  color: #409eff;
-  border-bottom-color: #409eff;
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
   font-weight: 500;
 }
 

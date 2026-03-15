@@ -10,16 +10,19 @@ export const useUserStore = defineStore('user', () => {
   const isLoggedIn = () => !!token.value;
 
   function applyTheme(t) {
-    theme.value = t;
-    localStorage.setItem('theme', t);
-    document.documentElement.setAttribute('data-theme', t);
+    const validTheme = ['light', 'dark'].includes(t) ? t : 'light';
+    theme.value = validTheme;
+    localStorage.setItem('theme', validTheme);
+    document.documentElement.setAttribute('data-theme', validTheme);
   }
 
   async function toggleTheme() {
     const newTheme = theme.value === 'light' ? 'dark' : 'light';
     applyTheme(newTheme);
     // 异步保存到后端，不阻塞 UI
-    request.put('/api/user/theme', { theme: newTheme }).catch(() => {});
+    request.put('/api/user/theme', { theme: newTheme }).catch((err) => {
+      console.warn('主题同步失败，将在下次操作时重试', err);
+    });
   }
 
   async function login(username, password) {

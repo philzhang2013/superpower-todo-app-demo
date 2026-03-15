@@ -115,7 +115,7 @@ async function handleLogin() {
 }
 
 .form-link a {
-  color: #409eff;
+  color: var(--color-primary);
   text-decoration: none;
 }
 </style>
