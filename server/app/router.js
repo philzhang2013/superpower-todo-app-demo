@@ -11,6 +11,7 @@ module.exports = (app) => {
 
   // Todo 接口（需鉴权）
   const auth = app.middleware.auth();
+  router.put('/api/user/theme', auth, controller.user.updateTheme);
   router.get('/api/todos', auth, controller.todo.index);
   router.post('/api/todos', auth, controller.todo.create);
   router.put('/api/todos/:id', auth, controller.todo.update);

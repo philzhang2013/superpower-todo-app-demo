@@ -12,7 +12,7 @@ class UserService extends Service {
     }
     const hashedPassword = bcrypt.hashSync(password, 10);
     const user = await ctx.model.User.create({ username, password: hashedPassword });
-    return { success: true, user: { id: user.id, username: user.username } };
+    return { success: true, user: { id: user.id, username: user.username, theme: user.theme } };
   }
 
   async login(username, password) {
@@ -30,7 +30,13 @@ class UserService extends Service {
       app.config.jwt.secret,
       { expiresIn: '7d' }
     );
-    return { success: true, token, user: { id: user.id, username: user.username } };
+    return { success: true, token, user: { id: user.id, username: user.username, theme: user.theme } };
+  }
+  async updateTheme(userId, theme) {
+    const user = await this.ctx.model.User.findByPk(userId);
+    if (!user) return false;
+    await user.update({ theme });
+    return true;
   }
 }
 
