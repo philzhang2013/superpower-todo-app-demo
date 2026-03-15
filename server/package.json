@@ -1,0 +1,27 @@
+{
+  "name": "todo-server",
+  "version": "1.0.0",
+  "description": "Todo App Backend powered by Egg.js",
+  "private": true,
+  "egg": {
+    "framework": "egg"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "egg": "^3",
+    "egg-cors": "^3.0.1",
+    "egg-jwt": "^3.1.7",
+    "egg-scripts": "^2",
+    "egg-sequelize": "^6.0.0",
+    "mysql2": "^3.19.1"
+  },
+  "devDependencies": {
+    "egg-bin": "^6"
+  },
+  "scripts": {
+    "dev": "egg-bin dev",
+    "start": "egg-scripts start --daemon",
+    "stop": "egg-scripts stop",
+    "test": "egg-bin test"
+  }
+}
