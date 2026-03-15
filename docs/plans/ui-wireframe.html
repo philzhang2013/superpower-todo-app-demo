@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Todo App UI 草图</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; padding: 40px 20px; }
+  h1 { text-align: center; margin-bottom: 40px; color: #1a1a1a; font-size: 28px; }
+  .pages { display: flex; flex-wrap: wrap; gap: 40px; justify-content: center; align-items: flex-start; }
+  .page { background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); overflow: hidden; width: 400px; }
+  .page-label { background: #409eff; color: #fff; padding: 8px 16px; font-size: 13px; font-weight: 600; letter-spacing: 1px; }
+  .page-label.green { background: #67c23a; }
+  .page-label.purple { background: #7c3aed; }
+
+  /* Navbar */
+  .navbar { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: #409eff; color: #fff; }
+  .navbar .logo { font-size: 16px; font-weight: 600; }
+  .navbar .user-info { display: flex; align-items: center; gap: 12px; font-size: 13px; }
+  .navbar .logout-btn { background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+
+  /* Auth forms */
+  .auth-container { padding: 40px 32px; }
+  .auth-title { text-align: center; font-size: 22px; margin-bottom: 28px; color: #303133; }
+  .form-group { margin-bottom: 18px; }
+  .form-group label { display: block; font-size: 13px; color: #606266; margin-bottom: 6px; }
+  .form-input { width: 100%; padding: 10px 14px; border: 1px solid #dcdfe6; border-radius: 6px; font-size: 14px; background: #f5f7fa; }
+  .form-btn { width: 100%; padding: 11px; background: #409eff; color: #fff; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; margin-top: 8px; font-weight: 500; }
+  .form-link { text-align: center; margin-top: 16px; font-size: 13px; color: #909399; }
+  .form-link a { color: #409eff; text-decoration: none; }
+
+  /* Todo page */
+  .todo-container { padding: 20px; }
+  .todo-input-row { display: flex; gap: 10px; margin-bottom: 20px; }
+  .todo-input { flex: 1; padding: 10px 14px; border: 1px solid #dcdfe6; border-radius: 6px; font-size: 14px; }
+  .todo-add-btn { padding: 10px 20px; background: #409eff; color: #fff; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; white-space: nowrap; }
+
+  /* Filter tabs */
+  .filter-tabs { display: flex; gap: 0; margin-bottom: 16px; border-bottom: 1px solid #e4e7ed; }
+  .filter-tab { padding: 8px 18px; font-size: 13px; color: #909399; cursor: pointer; border-bottom: 2px solid transparent; }
+  .filter-tab.active { color: #409eff; border-bottom-color: #409eff; font-weight: 500; }
+
+  /* Todo list */
+  .todo-list { list-style: none; }
+  .todo-item { display: flex; align-items: center; padding: 12px 8px; border-bottom: 1px solid #f0f0f0; gap: 12px; }
+  .todo-item:last-child { border-bottom: none; }
+  .todo-checkbox { width: 18px; height: 18px; border: 2px solid #dcdfe6; border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .todo-checkbox.checked { background: #409eff; border-color: #409eff; }
+  .todo-checkbox.checked::after { content: "✓"; color: #fff; font-size: 12px; font-weight: bold; }
+  .todo-title { flex: 1; font-size: 14px; color: #303133; }
+  .todo-title.completed { text-decoration: line-through; color: #c0c4cc; }
+  .todo-title .hint { font-size: 11px; color: #c0c4cc; font-style: italic; margin-left: 6px; }
+  .todo-delete { color: #f56c6c; font-size: 13px; cursor: pointer; padding: 2px 8px; border-radius: 4px; }
+  .todo-time { font-size: 11px; color: #c0c4cc; flex-shrink: 0; }
+
+  /* Stats bar */
+  .stats-bar { display: flex; justify-content: space-between; padding: 12px 8px; font-size: 12px; color: #909399; border-top: 1px solid #f0f0f0; margin-top: 8px; }
+
+  /* Annotations */
+  .annotation { background: #fef9e7; border-left: 3px solid #e6a23c; padding: 8px 12px; margin: 12px 20px; font-size: 12px; color: #e6a23c; border-radius: 0 4px 4px 0; }
+
+  /* Section title */
+  .section-title { text-align: center; color: #909399; font-size: 14px; margin: 40px 0 20px; padding-top: 20px; border-top: 1px dashed #dcdfe6; }
+  .section-title:first-of-type { border-top: none; margin-top: 0; }
+
+  /* Responsive */
+  @media (max-width: 900px) { .pages { flex-direction: column; align-items: center; } }
+</style>
+</head>
+<body>
+
+<h1>Todo App - UI 草图</h1>
+
+<!-- ==================== 登录 & 注册 ==================== -->
+<p class="section-title">用户认证页面</p>
+<div class="pages">
+
+  <!-- 登录页 -->
+  <div class="page">
+    <div class="page-label">页面：/login - 登录</div>
+    <div class="auth-container">
+      <div class="auth-title">Todo App</div>
+      <div class="form-group">
+        <label>用户名</label>
+        <input class="form-input" placeholder="请输入用户名" />
+      </div>
+      <div class="form-group">
+        <label>密码</label>
+        <input class="form-input" type="password" placeholder="请输入密码" />
+      </div>
+      <button class="form-btn">登 录</button>
+      <div class="form-link">还没有账号？<a href="#">立即注册</a></div>
+    </div>
+    <div class="annotation">路由守卫：已登录用户访问此页会重定向到首页</div>
+  </div>
+
+  <!-- 注册页 -->
+  <div class="page">
+    <div class="page-label green">页面：/register - 注册</div>
+    <div class="auth-container">
+      <div class="auth-title">创建账号</div>
+      <div class="form-group">
+        <label>用户名</label>
+        <input class="form-input" placeholder="请输入用户名" />
+      </div>
+      <div class="form-group">
+        <label>密码</label>
+        <input class="form-input" type="password" placeholder="请输入密码（至少6位）" />
+      </div>
+      <div class="form-group">
+        <label>确认密码</label>
+        <input class="form-input" type="password" placeholder="请再次输入密码" />
+      </div>
+      <button class="form-btn" style="background:#67c23a;">注 册</button>
+      <div class="form-link">已有账号？<a href="#">去登录</a></div>
+    </div>
+    <div class="annotation">校验：用户名不能为空、密码至少6位、两次密码一致</div>
+  </div>
+
+</div>
+
+<!-- ==================== Todo 主页 ==================== -->
+<p class="section-title">Todo 列表主页（登录后）</p>
+<div class="pages">
+
+  <div class="page" style="width: 520px;">
+    <div class="page-label purple">页面：/ - Todo 列表（首页）</div>
+
+    <!-- Navbar -->
+    <div class="navbar">
+      <div class="logo">Todo App</div>
+      <div class="user-info">
+        <span>Hi, zhangsan</span>
+        <button class="logout-btn">退出登录</button>
+      </div>
+    </div>
+
+    <div class="todo-container">
+      <!-- Input -->
+      <div class="todo-input-row">
+        <input class="todo-input" placeholder="添加新的待办事项，按回车提交..." />
+        <button class="todo-add-btn">+ 添加</button>
+      </div>
+
+      <!-- Filter -->
+      <div class="filter-tabs">
+        <div class="filter-tab active">全部 (5)</div>
+        <div class="filter-tab">未完成 (3)</div>
+        <div class="filter-tab">已完成 (2)</div>
+      </div>
+
+      <!-- Todo List -->
+      <ul class="todo-list">
+        <li class="todo-item">
+          <div class="todo-checkbox"></div>
+          <span class="todo-title">学习 Vue 3 组合式 API</span>
+          <span class="todo-time">03-15</span>
+          <span class="todo-delete">删除</span>
+        </li>
+        <li class="todo-item">
+          <div class="todo-checkbox"></div>
+          <span class="todo-title">完成 Egg.js 后端接口开发 <span class="hint">← 双击编辑</span></span>
+          <span class="todo-time">03-15</span>
+          <span class="todo-delete">删除</span>
+        </li>
+        <li class="todo-item">
+          <div class="todo-checkbox checked"></div>
+          <span class="todo-title completed">搭建项目基础框架</span>
+          <span class="todo-time">03-14</span>
+          <span class="todo-delete">删除</span>
+        </li>
+        <li class="todo-item">
+          <div class="todo-checkbox"></div>
+          <span class="todo-title">编写单元测试</span>
+          <span class="todo-time">03-14</span>
+          <span class="todo-delete">删除</span>
+        </li>
+        <li class="todo-item">
+          <div class="todo-checkbox checked"></div>
+          <span class="todo-title completed">设计数据库表结构</span>
+          <span class="todo-time">03-13</span>
+          <span class="todo-delete">删除</span>
+        </li>
+      </ul>
+
+      <!-- Stats -->
+      <div class="stats-bar">
+        <span>共 5 项，已完成 2 项</span>
+        <span>未完成 3 项</span>
+      </div>
+    </div>
+
+    <div class="annotation">交互说明：勾选框切换完成状态 | 双击标题进入编辑模式 | 删除需二次确认</div>
+  </div>
+
+</div>
+
+<div style="text-align:center; margin-top:40px; color:#c0c4cc; font-size:12px;">
+  Todo App UI Wireframe - 设计草图 v1.0
+</div>
+
+</body>
+</html>
