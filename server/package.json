@@ -16,7 +16,8 @@
     "mysql2": "^3.19.1"
   },
   "devDependencies": {
-    "egg-bin": "^6"
+    "egg-bin": "^6",
+    "egg-mock": "^5.15.2"
   },
   "scripts": {
     "dev": "egg-bin dev",

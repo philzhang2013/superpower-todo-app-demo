@@ -7,6 +7,7 @@ module.exports = (app) => {
     id: { type: INTEGER, primaryKey: true, autoIncrement: true },
     username: { type: STRING(50), allowNull: false, unique: true },
     password: { type: STRING(255), allowNull: false },
+    theme: { type: STRING(10), allowNull: false, defaultValue: 'light' },
     created_at: DATE,
     updated_at: DATE,
   });

@@ -5,6 +5,9 @@
       <div class="logo">Todo App</div>
       <div class="user-info">
         <span>Hi, {{ userStore.user?.username }}</span>
+        <el-button size="small" circle @click="userStore.toggleTheme">
+          {{ userStore.theme === 'light' ? '🌙' : '☀️' }}
+        </el-button>
         <el-button size="small" @click="handleLogout">退出登录</el-button>
       </div>
     </div>
@@ -177,7 +180,7 @@ function handleLogout() {
 <style scoped>
 .todo-page {
   min-height: 100vh;
-  background: #f0f2f5;
+  background: var(--bg-page);
 }
 
 .navbar {
@@ -185,8 +188,8 @@ function handleLogout() {
   justify-content: space-between;
   align-items: center;
   padding: 12px 24px;
-  background: #409eff;
-  color: #fff;
+  background: var(--bg-navbar);
+  color: var(--text-navbar);
 }
 
 .logo {
@@ -205,9 +208,9 @@ function handleLogout() {
   max-width: 600px;
   margin: 24px auto;
   padding: 24px;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-card);
 }
 
 .todo-input-row {
@@ -219,27 +222,27 @@ function handleLogout() {
 .filter-tabs {
   display: flex;
   margin-bottom: 16px;
-  border-bottom: 1px solid #e4e7ed;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .filter-tab {
   padding: 8px 18px;
   font-size: 13px;
-  color: #909399;
+  color: var(--text-secondary);
   cursor: pointer;
   border-bottom: 2px solid transparent;
 }
 
 .filter-tab.active {
-  color: #409eff;
-  border-bottom-color: #409eff;
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
   font-weight: 500;
 }
 
 .empty-tip {
   text-align: center;
   padding: 40px 0;
-  color: #c0c4cc;
+  color: var(--text-muted);
   font-size: 14px;
 }
 
@@ -253,7 +256,7 @@ function handleLogout() {
   display: flex;
   align-items: center;
   padding: 12px 8px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border-light);
   gap: 12px;
 }
 
@@ -264,13 +267,13 @@ function handleLogout() {
 .todo-title {
   flex: 1;
   font-size: 14px;
-  color: #303133;
+  color: var(--text-primary);
   cursor: pointer;
 }
 
 .todo-title.completed {
   text-decoration: line-through;
-  color: #c0c4cc;
+  color: var(--text-muted);
 }
 
 .edit-input {
@@ -279,7 +282,7 @@ function handleLogout() {
 
 .todo-time {
   font-size: 12px;
-  color: #c0c4cc;
+  color: var(--text-muted);
   flex-shrink: 0;
 }
 
@@ -288,8 +291,8 @@ function handleLogout() {
   justify-content: space-between;
   padding: 12px 8px 0;
   font-size: 12px;
-  color: #909399;
-  border-top: 1px solid #f0f0f0;
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border-light);
   margin-top: 8px;
 }
 </style>

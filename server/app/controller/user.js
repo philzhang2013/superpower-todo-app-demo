@@ -40,6 +40,22 @@ class UserController extends Controller {
     }
     ctx.body = { code: 0, data: { token: result.token, user: result.user }, message: '登录成功' };
   }
+  async updateTheme() {
+    const { ctx } = this;
+    const { theme } = ctx.request.body;
+
+    if (!theme || !['light', 'dark'].includes(theme)) {
+      ctx.body = { code: 1, message: '无效的主题值' };
+      return;
+    }
+
+    const result = await ctx.service.user.updateTheme(ctx.state.user.id, theme);
+    if (!result) {
+      ctx.body = { code: 1, message: '用户不存在' };
+      return;
+    }
+    ctx.body = { code: 0, message: '主题更新成功' };
+  }
 }
 
 module.exports = UserController;
