@@ -111,21 +111,21 @@ async function handleRegister() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f0f2f5;
+  background: var(--bg-page);
 }
 
 .register-card {
   width: 400px;
   padding: 40px 32px;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-card);
 }
 
 .register-title {
   text-align: center;
   font-size: 24px;
-  color: #303133;
+  color: var(--text-primary);
   margin-bottom: 32px;
 }
 
@@ -137,7 +137,7 @@ async function handleRegister() {
   text-align: center;
   margin-top: 16px;
   font-size: 13px;
-  color: #909399;
+  color: var(--text-secondary);
 }
 
 .form-link a {

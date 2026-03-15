@@ -8,97 +8,232 @@
 
 **技术栈：** CSS 变量、Egg.js Sequelize 模型修改、Vue 3 响应式状态
 
+**测试框架：** 后端 egg-mock + assert（Egg.js 内置），前端 vitest + @vue/test-utils（需安装）
+
 **设计文档：** `docs/plans/2026-03-15-theme-switch-design.md`
 
 **工作目录：** `.worktrees/feature-theme-switch/`
 
 ---
 
-## 任务 1：后端 — User 模型新增 theme 字段
+## 任务 1：搭建测试基础设施
 
 **文件：**
+- 创建：`server/test/app/controller/user.test.js`（空文件，后续任务填充）
+- 修改：`client/package.json`（安装 vitest）
+- 创建：`client/src/stores/__tests__/user.test.js`（空文件，后续任务填充）
+
+**步骤 1：创建后端测试目录**
+
+```bash
+mkdir -p server/test/app/controller
+```
+
+**步骤 2：安装前端测试框架**
+
+```bash
+cd client && npm install -D vitest @vue/test-utils jsdom
+```
+
+**步骤 3：在 `client/package.json` 的 scripts 中添加 test 命令**
+
+在 `"preview": "vite preview"` 后添加：
+
+```json
+"test": "vitest run",
+"test:watch": "vitest"
+```
+
+**步骤 4：在 `client/vite.config.js` 中添加 vitest 配置**
+
+在 `export default defineConfig` 中添加 test 配置：
+
+```js
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+
+export default defineConfig({
+  plugins: [vue()],
+  test: {
+    environment: 'jsdom',
+    globals: true,
+  },
+})
+```
+
+**步骤 5：提交**
+
+```bash
+git add server/test/ client/package.json client/package-lock.json client/vite.config.js
+git commit -m "chore: 搭建前后端测试基础设施"
+```
+
+---
+
+## 任务 2：后端 — User 模型新增 theme 字段（TDD）
+
+**文件：**
+- 创建：`server/test/app/controller/user.test.js`
 - 修改：`server/app/model/user.js`
 
-**步骤 1：修改 User 模型，新增 theme 字段**
+**步骤 1：编写失败测试（RED）**
 
-在 `server/app/model/user.js` 的字段定义中添加：
+创建 `server/test/app/controller/user.test.js`：
+
+```js
+'use strict';
+
+const { app, assert } = require('egg-mock/bootstrap');
+
+describe('User Theme', () => {
+  let token;
+
+  before(async () => {
+    // 确保测试用户存在
+    await app.httpRequest()
+      .post('/api/user/register')
+      .send({ username: 'themetest', password: '123456' })
+      .expect(200);
+
+    const res = await app.httpRequest()
+      .post('/api/user/login')
+      .send({ username: 'themetest', password: '123456' })
+      .expect(200);
+
+    token = res.body.data.token;
+  });
+
+  it('登录应返回 theme 字段', async () => {
+    const res = await app.httpRequest()
+      .post('/api/user/login')
+      .send({ username: 'themetest', password: '123456' })
+      .expect(200);
+
+    assert(res.body.code === 0);
+    assert(res.body.data.user.theme === 'light');
+  });
+});
+```
+
+**步骤 2：运行测试，确认失败**
+
+```bash
+cd server && npx egg-bin test
+```
+
+预期：FAIL — `res.body.data.user.theme` 为 undefined（因为 User 模型还没有 theme 字段）
+
+**步骤 3：最小实现（GREEN）**
+
+修改 `server/app/model/user.js`，在字段定义中 `password` 之后添加：
 
 ```js
 theme: { type: STRING(10), allowNull: false, defaultValue: 'light' },
 ```
 
-完整字段列表变为：id, username, password, theme, created_at, updated_at。
+修改 `server/app/service/user.js`：
 
-**步骤 2：验证数据库同步**
-
-启动 Egg.js（`app.js` 中的 `model.sync({ alter: true })` 会自动添加字段）：
-
-```bash
-cd server && npx egg-bin dev --port=7001
-```
-
-然后用 Node.js 验证字段已添加：
-
-```bash
-node -e "
-const mysql = require('mysql2/promise');
-(async () => {
-  const conn = await mysql.createConnection({
-    host: 'mysql.lz.jwzh.online', port: 53312,
-    user: 'root', password: 'Founder#123', database: 'todo_app',
-  });
-  const [rows] = await conn.execute('DESCRIBE users');
-  console.log(rows.map(r => r.Field).join(', '));
-  await conn.end();
-})();
-"
-```
-
-预期输出包含：`id, username, password, theme, created_at, updated_at`
-
-**步骤 3：提交**
-
-```bash
-git add server/app/model/user.js
-git commit -m "feat: User 模型新增 theme 字段"
-```
-
----
-
-## 任务 2：后端 — 登录接口返回 theme + 新增更新 theme 接口
-
-**文件：**
-- 修改：`server/app/service/user.js:15,33`
-- 修改：`server/app/controller/user.js`
-- 修改：`server/app/router.js`
-
-**步骤 1：修改 UserService，登录返回 theme**
-
-在 `server/app/service/user.js` 中：
-
-- `register` 方法返回值增加 theme：
+- `register` 方法返回值改为：
   ```js
   return { success: true, user: { id: user.id, username: user.username, theme: user.theme } };
   ```
 
-- `login` 方法返回值增加 theme：
+- `login` 方法返回值改为：
   ```js
   return { success: true, token, user: { id: user.id, username: user.username, theme: user.theme } };
   ```
 
-- 新增 `updateTheme` 方法：
-  ```js
-  async updateTheme(userId, theme) {
-    const user = await this.ctx.model.User.findByPk(userId);
-    if (!user) return false;
-    await user.update({ theme });
-    return true;
-  }
-  ```
+**步骤 4：运行测试，确认通过**
 
-**步骤 2：新增 UserController.updateTheme**
+```bash
+cd server && npx egg-bin test
+```
 
-在 `server/app/controller/user.js` 中新增方法：
+预期：PASS — `登录应返回 theme 字段`
+
+**步骤 5：提交**
+
+```bash
+git add server/app/model/user.js server/app/service/user.js server/test/
+git commit -m "feat: User 模型新增 theme 字段，登录返回 theme"
+```
+
+---
+
+## 任务 3：后端 — 新增更新 theme 接口（TDD）
+
+**文件：**
+- 修改：`server/test/app/controller/user.test.js`
+- 修改：`server/app/service/user.js`
+- 修改：`server/app/controller/user.js`
+- 修改：`server/app/router.js`
+
+**步骤 1：编写失败测试（RED）**
+
+在 `server/test/app/controller/user.test.js` 的 `describe` 中追加测试用例：
+
+```js
+  it('应能更新主题为 dark', async () => {
+    const res = await app.httpRequest()
+      .put('/api/user/theme')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ theme: 'dark' })
+      .expect(200);
+
+    assert(res.body.code === 0);
+    assert(res.body.message === '主题更新成功');
+  });
+
+  it('更新后登录应返回 dark', async () => {
+    const res = await app.httpRequest()
+      .post('/api/user/login')
+      .send({ username: 'themetest', password: '123456' })
+      .expect(200);
+
+    assert(res.body.data.user.theme === 'dark');
+  });
+
+  it('无效主题值应返回错误', async () => {
+    const res = await app.httpRequest()
+      .put('/api/user/theme')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ theme: 'invalid' })
+      .expect(200);
+
+    assert(res.body.code === 1);
+    assert(res.body.message === '无效的主题值');
+  });
+
+  it('未登录应返回 401', async () => {
+    await app.httpRequest()
+      .put('/api/user/theme')
+      .send({ theme: 'dark' })
+      .expect(401);
+  });
+```
+
+**步骤 2：运行测试，确认失败**
+
+```bash
+cd server && npx egg-bin test
+```
+
+预期：FAIL — 路由 PUT /api/user/theme 不存在，返回 404
+
+**步骤 3：最小实现（GREEN）**
+
+在 `server/app/service/user.js` 的 `UserService` 类中新增方法：
+
+```js
+async updateTheme(userId, theme) {
+  const user = await this.ctx.model.User.findByPk(userId);
+  if (!user) return false;
+  await user.update({ theme });
+  return true;
+}
+```
+
+在 `server/app/controller/user.js` 的 `UserController` 类中新增方法：
 
 ```js
 async updateTheme() {
@@ -119,48 +254,48 @@ async updateTheme() {
 }
 ```
 
-**步骤 3：添加路由**
-
-在 `server/app/router.js` 的 Todo 路由之前添加：
+在 `server/app/router.js` 中 Todo 路由之前添加：
 
 ```js
 router.put('/api/user/theme', auth, controller.user.updateTheme);
 ```
 
-**步骤 4：用 curl 测试**
+**步骤 4：运行测试，确认全部通过**
 
 ```bash
-# 登录，验证返回 theme 字段
-curl -s -X POST http://localhost:7001/api/user/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"testuser","password":"123456"}'
-# 预期：data.user 中包含 "theme":"light"
-
-# 更新主题
-TOKEN="从上面获取"
-curl -s -X PUT http://localhost:7001/api/user/theme \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d '{"theme":"dark"}'
-# 预期：{"code":0,"message":"主题更新成功"}
-
-# 再次登录验证 theme 已更新
-curl -s -X POST http://localhost:7001/api/user/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"testuser","password":"123456"}'
-# 预期：data.user.theme 为 "dark"
+cd server && npx egg-bin test
 ```
+
+预期：PASS — 4 个测试全部通过
 
 **步骤 5：提交**
 
 ```bash
-git add server/app/service/user.js server/app/controller/user.js server/app/router.js
-git commit -m "feat: 登录返回 theme 字段，新增更新主题接口"
+git add server/test/ server/app/service/user.js server/app/controller/user.js server/app/router.js
+git commit -m "feat: 新增更新主题接口 PUT /api/user/theme"
 ```
 
 ---
 
-## 任务 3：前端 — 创建 CSS 主题变量
+## ✅ Code Review 检查点 1（后端完成）
+
+暂停执行，使用 `code-reviewer` agent 审查以下文件：
+- `server/app/model/user.js`
+- `server/app/service/user.js`
+- `server/app/controller/user.js`
+- `server/app/router.js`
+- `server/test/app/controller/user.test.js`
+
+审查要点：
+- 输入验证是否完整
+- 测试覆盖率是否足够
+- 安全性（鉴权是否正确）
+
+处理审查反馈后再继续。
+
+---
+
+## 任务 4：前端 — 创建 CSS 主题变量
 
 **文件：**
 - 创建：`client/src/styles/theme.css`
@@ -217,12 +352,84 @@ git commit -m "feat: 创建亮色/暗色 CSS 主题变量"
 
 ---
 
-## 任务 4：前端 — User Store 增加主题管理
+## 任务 5：前端 — User Store 增加主题管理（TDD）
 
 **文件：**
+- 创建：`client/src/stores/__tests__/user.test.js`
 - 修改：`client/src/stores/user.js`
 
-**步骤 1：修改 User Store**
+**步骤 1：编写失败测试（RED）**
+
+创建 `client/src/stores/__tests__/user.test.js`：
+
+```js
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { setActivePinia, createPinia } from 'pinia';
+import { useUserStore } from '../user';
+
+// mock request
+vi.mock('../../utils/request', () => ({
+  default: {
+    post: vi.fn(),
+    put: vi.fn().mockResolvedValue({}),
+    get: vi.fn(),
+    delete: vi.fn(),
+  },
+}));
+
+// mock router
+vi.mock('../../router', () => ({
+  default: { push: vi.fn() },
+}));
+
+describe('User Store - Theme', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    localStorage.clear();
+    document.documentElement.removeAttribute('data-theme');
+  });
+
+  it('默认主题应为 light', () => {
+    const store = useUserStore();
+    expect(store.theme).toBe('light');
+  });
+
+  it('applyTheme 应设置 data-theme 属性和 localStorage', () => {
+    const store = useUserStore();
+    store.applyTheme('dark');
+    expect(store.theme).toBe('dark');
+    expect(localStorage.getItem('theme')).toBe('dark');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+  });
+
+  it('toggleTheme 应在 light/dark 之间切换', async () => {
+    const store = useUserStore();
+    expect(store.theme).toBe('light');
+    await store.toggleTheme();
+    expect(store.theme).toBe('dark');
+    await store.toggleTheme();
+    expect(store.theme).toBe('light');
+  });
+
+  it('logout 应重置主题为 light', () => {
+    const store = useUserStore();
+    store.applyTheme('dark');
+    store.logout();
+    expect(store.theme).toBe('light');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+  });
+});
+```
+
+**步骤 2：运行测试，确认失败**
+
+```bash
+cd client && npx vitest run
+```
+
+预期：FAIL — `store.theme` 不存在（User Store 还没有 theme 相关代码）
+
+**步骤 3：最小实现（GREEN）**
 
 完整替换 `client/src/stores/user.js`：
 
@@ -247,7 +454,6 @@ export const useUserStore = defineStore('user', () => {
   async function toggleTheme() {
     const newTheme = theme.value === 'light' ? 'dark' : 'light';
     applyTheme(newTheme);
-    // 异步保存到后端，不阻塞 UI
     request.put('/api/user/theme', { theme: newTheme }).catch(() => {});
   }
 
@@ -257,7 +463,6 @@ export const useUserStore = defineStore('user', () => {
     user.value = res.data.user;
     localStorage.setItem('token', res.data.token);
     localStorage.setItem('user', JSON.stringify(res.data.user));
-    // 登录时从后端恢复主题偏好
     applyTheme(res.data.user.theme || 'light');
   }
 
@@ -270,27 +475,33 @@ export const useUserStore = defineStore('user', () => {
     user.value = null;
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    // 登出后恢复亮色主题
     applyTheme('light');
   }
 
-  // 初始化时应用已保存的主题
   applyTheme(theme.value);
 
   return { token, user, theme, isLoggedIn, applyTheme, toggleTheme, login, register, logout };
 });
 ```
 
-**步骤 2：提交**
+**步骤 4：运行测试，确认通过**
 
 ```bash
-git add client/src/stores/user.js
+cd client && npx vitest run
+```
+
+预期：PASS — 4 个测试全部通过
+
+**步骤 5：提交**
+
+```bash
+git add client/src/stores/__tests__/user.test.js client/src/stores/user.js
 git commit -m "feat: User Store 增加主题状态管理"
 ```
 
 ---
 
-## 任务 5：前端 — 三个页面适配 CSS 变量 + 导航栏添加切换按钮
+## 任务 6：前端 — 三个页面适配 CSS 变量 + 导航栏添加切换按钮
 
 **文件：**
 - 修改：`client/src/views/TodoList.vue`
@@ -351,9 +562,46 @@ git commit -m "feat: 三个页面适配 CSS 变量，导航栏添加主题切换
 
 ---
 
-## 任务 6：端到端验证 + 最终提交
+## ✅ Code Review 检查点 2（前端完成）
 
-**步骤 1：启动前后端**
+暂停执行，使用 `code-reviewer` agent 审查以下文件：
+- `client/src/styles/theme.css`
+- `client/src/stores/user.js`
+- `client/src/stores/__tests__/user.test.js`
+- `client/src/views/TodoList.vue`
+- `client/src/views/Login.vue`
+- `client/src/views/Register.vue`
+
+审查要点：
+- CSS 变量是否有遗漏的硬编码颜色
+- 暗色主题下 Element Plus 组件样式是否协调
+- 测试覆盖率是否足够
+
+处理审查反馈后再继续。
+
+---
+
+## 任务 7：全量测试 + 端到端验证
+
+**步骤 1：运行全部后端测试**
+
+```bash
+cd server && npx egg-bin test
+```
+
+预期：所有测试通过
+
+**步骤 2：运行全部前端测试**
+
+```bash
+cd client && npx vitest run
+```
+
+预期：所有测试通过
+
+**步骤 3：端到端手动验证**
+
+同时启动前后端：
 
 ```bash
 # 终端 1
@@ -363,7 +611,7 @@ cd server && npx egg-bin dev --port=7001
 cd client && npm run dev
 ```
 
-**步骤 2：完整验证流程**
+验证流程：
 
 1. 访问 http://localhost:5173 → 登录页，亮色主题
 2. 登录 → 进入 Todo 列表页，导航栏有 🌙 图标
@@ -371,9 +619,9 @@ cd client && npm run dev
 4. 刷新页面 → 暗色主题保持（localStorage）
 5. 退出登录 → 回到亮色主题
 6. 重新登录 → 恢复暗色主题（从后端读取）
-7. 用另一个浏览器登录同一账号 → 也是暗色主题（跨设备同步）
+7. 添加/编辑/删除 Todo → 暗色主题下功能正常
 
-**步骤 3：提交（如果步骤 2 中有修复）**
+**步骤 4：提交（如有修复）**
 
 ```bash
 git add -A
